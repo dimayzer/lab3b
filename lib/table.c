@@ -12,7 +12,9 @@ Table *create_table(size_t max_size_key_space){
 	table->len_key_space = 0;
 	table->max_size_key_space = max_size_key_space;
 	table->key_space = (KeySpace *)malloc(max_size_key_space * sizeof(KeySpace));
-
+	for(size_t i = 0; i < table->max_size_key_space; i++){
+		table->key_space[i].busy = -1;
+	}
 	if(table->key_space == NULL){	
 		free(table);
 		return NULL;
@@ -20,7 +22,10 @@ Table *create_table(size_t max_size_key_space){
 	return table;
 }
 
-//ГОТОВО
+
+
+
+//исправил
 int insert(Table *table, KeyType key, InfoType *info){
 	if(table == NULL) return ALLOC_ERROR;
 
@@ -28,6 +33,17 @@ int insert(Table *table, KeyType key, InfoType *info){
 	ULLI release = 1;
 	(table->len_key_space)++;
 	long long int index_first = hash(table->max_size_key_space, key, 0), index = -1;
+
+		if( (index = search(table, key)) != -1){
+			release = (table->key_space[find_last_rel(table, key)].release) + 1;
+			table->key_space[index].busy = 1;
+			table->key_space[index].key = key;
+			table->key_space[index].release = release;
+			table->key_space[index].info = strdup(info);	
+			return SUCCESS;
+		}
+
+/*
 		for(size_t i = 0; index != index_first || i == 1; i++){
 			index = hash(table->max_size_key_space, key, i);
 			if(table->key_space[index].key == key) {
@@ -46,11 +62,11 @@ int insert(Table *table, KeyType key, InfoType *info){
 	
 
 	//printf("сюда\n");
-	table->key_space[index].busy = 1;
+/*	table->key_space[index].busy = 1;
 	table->key_space[index].key = key;
 	table->key_space[index].release = release;
 	table->key_space[index].info = strdup(info);
-	return SUCCESS;
+	return SUCCESS; */
 	/*
 	index = binary_search(table, key);
 	ULLI release = 1;
@@ -145,22 +161,21 @@ void free_table(Table *table){
 	return;
 }
 
+//ready
+int search(Table *table, KeyType key){
+	if(table->len_key_space == 0) return -1;
 
-/*int search(Table *table, KeyType key){
-	if(table->len_key_space == 0) return ALLOC_ERROR;
-
-	int index;
-	size_t n = 0;
-	for(size_t i = 1;n < table->max_size_key_space; i++){
+	int index = hash(table, key, 0);
+	for(size_t i = 0; table->key_space[index].busy != -1; i++){
 		index = hash(table, key, i);
 		if(table->key_space[index].key == key && table->key_space[index].busy != 1)
 			return index;
-		n++;
+	
 		
 	}
-	return SEARCH_ERROR;
+	return -1;
 	
-}*/
+}
 
 //ГОТОВО
 void print_table(Table *table){
@@ -174,14 +189,15 @@ void print_table(Table *table){
 	printf("\t TABLE: \n");
 	printf("busy		key     	realese	 	info\n");
 	for(size_t i = 0; i < table->max_size_key_space; i++){
+		
+		printf("%d		", table->key_space[i].busy);
 		if(table->key_space[i].busy == 1){
-		printf("%llu		", table->key_space[i].busy);
 		printf("%llu		", table->key_space[i].key);
 		printf("%llu 		", table->key_space[i].release);
 		printf("%s\n", table->key_space[i].info);
 	}
 		else
-		printf("0		-		-		-\n");
+		printf("-		-		-\n");
 	}
 	printf("\n");
 	return;

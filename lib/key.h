@@ -7,7 +7,7 @@
 
 #define ULLI unsigned long long int
 
-typedef ULLI BusyType;
+typedef int BusyType;
 typedef ULLI KeyType;
 typedef ULLI RelType;
 typedef char InfoType;
